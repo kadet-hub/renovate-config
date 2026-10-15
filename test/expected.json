@@ -1,12 +1,20 @@
 [
   {
+    "packageFile": "inventory/targets/example.yml",
     "depName": "ghcr.io/kadet-hub/external-secrets",
     "currentValue": "1.0.0",
     "currentDigest": "sha256:f882e0a651a269cecc7fd453c46ad823e7c59d7ac16273df88db5d01c20b7780"
   },
   {
+    "packageFile": "inventory/targets/example.yml",
     "depName": "ghcr.io/kadet-hub/keda",
     "currentValue": "1.0.0",
     "currentDigest": "sha256:8ff7c02952f48255a456366aa00d7677c354b8993bd42fe97425509ac62a5c96"
+  },
+  {
+    "packageFile": "platform/inventory/targets/cluster.yml",
+    "depName": "ghcr.io/kadet-hub/kubernetes",
+    "currentValue": "1.0.0",
+    "currentDigest": "sha256:247699eb69132b913e29e2e58d4140b79f2790c5ab9543e86569f76ebe341080"
   }
 ]

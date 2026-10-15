@@ -23,18 +23,19 @@ parameters:
 ```
 
 Pin the consumer workflow `kadet-hub/registry/.github/workflows/consumer.yml`
-at the merge commit of
-[kadet-hub/registry#234](https://github.com/kadet-hub/registry/pull/234) or
+at `208fedc88f7b544b0614eeac3a96f221ac5ada2b`, the merge of
+[kadet-hub/registry#234](https://github.com/kadet-hub/registry/pull/234), or
 later. Older commits reject a tag in the source with `source must be
 <host>/<repository>@sha256:<digest>`. Sources without a tag are not updated.
 
 ## What it does
 
-A regex manager finds the source in `inventory/**/*.yml` and
-`inventory/**/*.yaml` and looks up the generator's tags on ghcr.io with
-the `docker` datasource and `semver` versioning. Each update is its own pull
-request with the label `kadet-hub` and changes tag and digest together.
-The preset sets `automerge: false` for these updates.
+A regex manager finds the source in `**/inventory/**/*.yml` and
+`**/inventory/**/*.yaml`, so in an `inventory/` directory at the repository
+root or in a nested Kapitan project. It looks up the generator's tags on
+ghcr.io with the `docker` datasource and `semver` versioning. Each update is
+its own pull request with the label `kadet-hub` and changes tag and digest
+together. The preset sets `automerge: false` for these updates.
 
 The consumer workflow checks every proposed version against the attested
 index. Renovate reads only the tags, so it can propose a version that was
@@ -47,6 +48,6 @@ update skips that whole major line. See
 
 The `test` workflow validates `default.json` and `renovate.json` with
 `renovate-config-validator --strict`, then runs Renovate with
-`--platform=local --dry-run=extract` and the preset over the fixture in
-`inventory/` and compares the extracted dependencies with
-`test/expected.json`.
+`--platform=local --dry-run=extract` and the preset over the fixtures in
+`inventory/` and `platform/inventory/` and compares the extracted
+dependencies with `test/expected.json`.

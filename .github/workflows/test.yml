@@ -38,6 +38,7 @@ jobs:
         run: |
           npx --yes --package "renovate@$RENOVATE_VERSION" -- renovate --platform=local --dry-run=extract > "$RUNNER_TEMP/extract.json"
           jq -s '[.[] | select(.msg == "Extracted dependencies") | .packageFiles.regex[]?
-            | select(.packageFile == "inventory/targets/example.yml") | .deps[]
-            | {depName, currentValue, currentDigest}]' "$RUNNER_TEMP/extract.json" > "$RUNNER_TEMP/got.json"
+            | select(.packageFile | test("(^|/)inventory/")) | .packageFile as $f | .deps[]
+            | {packageFile: $f, depName, currentValue, currentDigest}] | sort_by(.packageFile, .depName)' \
+            "$RUNNER_TEMP/extract.json" > "$RUNNER_TEMP/got.json"
           diff -u test/expected.json "$RUNNER_TEMP/got.json"

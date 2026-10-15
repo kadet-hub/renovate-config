@@ -1,0 +1,6 @@
+parameters:
+  kapitan:
+    dependencies:
+      - type: oci
+        source: ghcr.io/kadet-hub/kubernetes:1.0.0@sha256:247699eb69132b913e29e2e58d4140b79f2790c5ab9543e86569f76ebe341080
+        output_path: lib/kubernetes
