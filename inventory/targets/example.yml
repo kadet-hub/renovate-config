@@ -1,0 +1,16 @@
+parameters:
+  kapitan:
+    dependencies:
+      - type: oci
+        source: ghcr.io/kadet-hub/external-secrets:1.0.0@sha256:f882e0a651a269cecc7fd453c46ad823e7c59d7ac16273df88db5d01c20b7780
+        output_path: lib/external-secrets
+      - type: oci
+        source: "ghcr.io/kadet-hub/keda:1.0.0@sha256:8ff7c02952f48255a456366aa00d7677c354b8993bd42fe97425509ac62a5c96"
+        output_path: lib/keda
+      # Not matched: no tag, and not a kadet-hub generator.
+      - type: oci
+        source: ghcr.io/kadet-hub/argocd@sha256:e027e7cc3b5aef5399cb0c955955ea745b8cef207227337ebcf7d58c7fd4b41c
+        output_path: lib/argocd
+      - type: oci
+        source: ghcr.io/example/other:1.0.0@sha256:0000000000000000000000000000000000000000000000000000000000000000
+        output_path: lib/other

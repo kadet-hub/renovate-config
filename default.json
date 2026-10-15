@@ -1,0 +1,34 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Update kadet-hub generators pinned as ghcr.io/kadet-hub/<name>:<version>@sha256:<digest> in Kapitan inventories",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "kadet-hub generators in kapitan.dependencies",
+      "managerFilePatterns": [
+        "inventory/**/*.yml",
+        "inventory/**/*.yaml"
+      ],
+      "matchStrings": [
+        "source:\\s*[\"']?(?<depName>ghcr\\.io/kadet-hub/[a-z][a-z0-9-]{1,38}):(?<currentValue>[A-Za-z0-9_][A-Za-z0-9._-]{0,127})@(?<currentDigest>sha256:[0-9a-f]{64})"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "One labelled pull request per generator update, never merged automatically",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/kadet-hub/*"
+      ],
+      "addLabels": [
+        "kadet-hub"
+      ],
+      "automerge": false
+    }
+  ]
+}
