@@ -1,0 +1,20 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "automerge": false,
+  "customManagers": [
+    {
+      "description": "Tool versions marked with a renovate comment in the workflows",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*[A-Z_]+: (?<currentValue>\\S+)"
+      ]
+    }
+  ]
+}

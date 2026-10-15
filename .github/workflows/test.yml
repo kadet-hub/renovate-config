@@ -1,0 +1,44 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      # renovate: datasource=npm depName=renovate
+      RENOVATE_VERSION: 44.161.2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.0
+          package-manager-cache: false
+
+      - name: Validate the preset and the repository config
+        run: |
+          npx --yes --package "renovate@$RENOVATE_VERSION" -- renovate-config-validator --strict --no-global default.json
+          npx --yes --package "renovate@$RENOVATE_VERSION" -- renovate-config-validator --strict
+
+      - name: Extract the fixture inventory with the preset
+        env:
+          RENOVATE_CONFIG_FILE: default.json
+          LOG_LEVEL: debug
+          LOG_FORMAT: json
+        run: |
+          npx --yes --package "renovate@$RENOVATE_VERSION" -- renovate --platform=local --dry-run=extract > "$RUNNER_TEMP/extract.json"
+          jq -s '[.[] | select(.msg == "Extracted dependencies") | .packageFiles.regex[]?
+            | select(.packageFile | test("(^|/)inventory/")) | .packageFile as $f | .deps[]
+            | {packageFile: $f, depName, currentValue, currentDigest}] | sort_by(.packageFile, .depName)' \
+            "$RUNNER_TEMP/extract.json" > "$RUNNER_TEMP/got.json"
+          diff -u test/expected.json "$RUNNER_TEMP/got.json"
