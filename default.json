@@ -18,7 +18,7 @@
   ],
   "packageRules": [
     {
-      "description": "One labelled pull request per generator update, never merged automatically",
+      "description": "One labelled pull request per generator update, never merged automatically and never held by a minimumReleaseAge: ghcr.io reports no release timestamps",
       "matchDatasources": [
         "docker"
       ],
@@ -28,7 +28,8 @@
       "addLabels": [
         "kadet-hub"
       ],
-      "automerge": false
+      "automerge": false,
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
     }
   ]
 }

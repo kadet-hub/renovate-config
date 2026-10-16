@@ -37,6 +37,12 @@ ghcr.io with the `docker` datasource and `semver` versioning. Each update is
 its own pull request with the label `kadet-hub` and changes tag and digest
 together. The preset sets `automerge: false` for these updates.
 
+ghcr.io reports no release timestamps, so `minimumReleaseAge` cannot delay
+generator updates. If your own configuration sets `minimumReleaseAge`,
+Renovate 42 and later hold every update without a timestamp indefinitely;
+the preset sets `minimumReleaseAgeBehaviour: timestamp-optional` for the
+generator updates, so they still arrive, without a delay.
+
 The consumer workflow checks every proposed version against the attested
 index. Renovate reads only the tags, so it can propose a version that was
 yanked after its release; the workflow then fails that pull request. Close
