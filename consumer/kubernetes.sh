@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-versions=$(curl -fsSL https://raw.githubusercontent.com/kadet-hub/renovate-config/fdd859537fcd6a16e036e4f6aa4557e5d5fb1a54/kubernetes-versions.json)
+url=https://raw.githubusercontent.com/kadet-hub/renovate-config/fdd859537fcd6a16e036e4f6aa4557e5d5fb1a54/kubernetes-versions.json # kubernetes-versions-2026-10-25
+versions=$(curl -fsSL "$url")
 kind_version=$(jq -r .kind.version <<<"$versions")
 kind version | grep -qF " $kind_version " || { echo "node images need kind $kind_version" >&2; exit 1; }
 jq -r '.kubernetes[] | [.minor, .node_image, .kubeconform] | @tsv' <<<"$versions" |

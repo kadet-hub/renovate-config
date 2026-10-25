@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from kubernetes_versions import compute  # noqa: E402
+from kubernetes_versions import compute, next_tag  # noqa: E402
 
 RELEASE = json.loads((ROOT / "test/kind-release-v0.33.0.json").read_text())
 DIGEST = "0" * 64
@@ -75,6 +75,26 @@ class Compute(unittest.TestCase):
     def test_missing_kind_digest_fails(self):
         with self.assertRaises(ValueError):
             compute("v1.37.1", dict(RELEASE, assets=RELEASE["assets"][:1]), SCHEMAS)
+
+
+class NextTag(unittest.TestCase):
+    def test_no_tag_when_the_list_did_not_change(self):
+        self.assertIsNone(next_tag(False, "2026-10-25", set(), []))
+
+    def test_first_tag_of_the_day(self):
+        self.assertEqual(
+            next_tag(True, "2026-10-25", {"kubernetes-versions-2026-10-24"}, []), "kubernetes-versions-2026-10-25"
+        )
+
+    def test_suffix_when_the_day_has_tags(self):
+        tags = {"kubernetes-versions-2026-10-25"}
+        self.assertEqual(next_tag(True, "2026-10-25", tags, []), "kubernetes-versions-2026-10-25-2")
+        tags.add("kubernetes-versions-2026-10-25-2")
+        self.assertEqual(next_tag(True, "2026-10-25", tags, []), "kubernetes-versions-2026-10-25-3")
+
+    def test_no_second_tag_on_a_tagged_head(self):
+        tags = {"kubernetes-versions-2026-10-25"}
+        self.assertIsNone(next_tag(True, "2026-10-25", tags, ["kubernetes-versions-2026-10-25"]))
 
 
 class CommittedFile(unittest.TestCase):

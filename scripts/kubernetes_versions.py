@@ -4,12 +4,15 @@
 import json
 import os
 import re
+import subprocess
 import sys
 import urllib.request
+from datetime import datetime, timezone
 
 NODE_IMAGE = re.compile(r"kindest/node:v(\d+)\.(\d+)\.(\d+)@sha256:[0-9a-f]{64}")
 KIND_ASSETS = {"linux-amd64": "kind-linux-amd64", "linux-arm64": "kind-linux-arm64"}
 WINDOW = 3
+TAG_PREFIX = "kubernetes-versions-"
 
 
 def compute(stable, release, schema_dirs):
@@ -45,6 +48,29 @@ def compute(stable, release, schema_dirs):
     return {"kind": {"version": release["tag_name"], "sha256": sha256}, "kubernetes": kubernetes}
 
 
+def next_tag(changed, date, tags, head_tags):
+    """Tag for the pushed head, or None when the list did not change or the head is tagged."""
+    if not changed or any(t.startswith(TAG_PREFIX) for t in head_tags):
+        return None
+    tag = f"{TAG_PREFIX}{date}"
+    n = 2
+    while tag in tags:
+        tag = f"{TAG_PREFIX}{date}-{n}"
+        n += 1
+    return tag
+
+
+def tag(before, after):
+    git = lambda *a: subprocess.run(["git", *a], capture_output=True, text=True)
+    diff = git("diff", "--quiet", before, after, "--", "kubernetes-versions.json")
+    if diff.returncode not in (0, 1):
+        raise RuntimeError(diff.stderr)
+    changed = diff.returncode == 1
+    tags = set(git("tag", "--list", TAG_PREFIX + "*").stdout.split())
+    head_tags = git("tag", "--points-at", after).stdout.split()
+    print(next_tag(changed, datetime.now(timezone.utc).date().isoformat(), tags, head_tags) or "")
+
+
 def fetch(url, token=None):
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as r:
@@ -64,4 +90,7 @@ def main(path):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    if sys.argv[1] == "tag":
+        tag(sys.argv[2], sys.argv[3])
+    else:
+        main(sys.argv[1])

@@ -70,11 +70,13 @@ sources are defined in
 }
 ```
 
-Fetch the file at a full commit SHA of this repository's `main`, replacing
-`<commit>` below. With the preset in your Renovate config, Renovate moves
-that SHA to the head of `main` in GitHub Actions workflows and `*.sh` files,
-as a pull request labelled `kadet-hub`. Every merge here moves the head, so
-that pull request can also come without a change to the list.
+Every change of the list on `main` gets a tag `kubernetes-versions-YYYY-MM-DD`,
+with `-2`, `-3` and so on for further changes that day. Fetch the file at the
+full commit SHA of a tag and write the tag after the URL as a comment, as
+`<commit>` and `<tag>` in the snippets below. With the preset in your
+Renovate config, Renovate moves commit and tag to the newest
+`kubernetes-versions-*` tag in GitHub Actions workflows and `*.sh` files, as
+a pull request labelled `kadet-hub`.
 
 GitHub Actions matrix:
 
@@ -97,9 +99,10 @@ jobs:
       kubernetes: ${{ steps.read.outputs.kubernetes }}
     steps:
       - id: read
+        env:
+          URL: https://raw.githubusercontent.com/kadet-hub/renovate-config/<commit>/kubernetes-versions.json # <tag>
         run: |
-          curl -fsSL https://raw.githubusercontent.com/kadet-hub/renovate-config/<commit>/kubernetes-versions.json \
-            | jq -r '"kind=\(.kind | tojson)", "kubernetes=\(.kubernetes | tojson)"' >> "$GITHUB_OUTPUT"
+          curl -fsSL "$URL" | jq -r '"kind=\(.kind | tojson)", "kubernetes=\(.kubernetes | tojson)"' >> "$GITHUB_OUTPUT"
 
   test:
     needs: kubernetes-versions
@@ -131,7 +134,8 @@ Shell script, run in the checkout:
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-versions=$(curl -fsSL https://raw.githubusercontent.com/kadet-hub/renovate-config/<commit>/kubernetes-versions.json)
+url=https://raw.githubusercontent.com/kadet-hub/renovate-config/<commit>/kubernetes-versions.json # <tag>
+versions=$(curl -fsSL "$url")
 kind_version=$(jq -r .kind.version <<<"$versions")
 kind version | grep -qF " $kind_version " || { echo "node images need kind $kind_version" >&2; exit 1; }
 jq -r '.kubernetes[] | [.minor, .node_image, .kubeconform] | @tsv' <<<"$versions" |
@@ -151,5 +155,5 @@ The `test` workflow validates `default.json` and `renovate.json` with
 `--platform=local --dry-run=extract` and the preset over the fixtures in
 `inventory/` and `platform/inventory/` and compares the extracted
 dependencies with `test/expected.json`. The fixtures in `consumer/` are the
-snippets above with a real SHA. `python3 -m unittest discover --start-directory test`
+snippets above with a commit and a tag filled in. `python3 -m unittest discover --start-directory test`
 runs the unit tests for the `kubernetes-versions.json` computation.

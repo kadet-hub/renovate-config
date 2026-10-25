@@ -17,18 +17,18 @@
     },
     {
       "customType": "regex",
-      "description": "renovate-config commit in kubernetes-versions.json URLs",
+      "description": "renovate-config commit and kubernetes-versions tag of kubernetes-versions.json URLs",
       "managerFilePatterns": [
         "/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/",
         "/\\.sh$/"
       ],
       "matchStrings": [
-        "raw\\.githubusercontent\\.com/kadet-hub/renovate-config/(?<currentDigest>[0-9a-f]{40})/kubernetes-versions\\.json"
+        "raw\\.githubusercontent\\.com/kadet-hub/renovate-config/(?<currentDigest>[0-9a-f]{40})/kubernetes-versions\\.json # (?<currentValue>kubernetes-versions-\\S+)"
       ],
       "depNameTemplate": "kadet-hub/renovate-config",
       "packageNameTemplate": "https://github.com/kadet-hub/renovate-config",
-      "currentValueTemplate": "main",
-      "datasourceTemplate": "git-refs"
+      "datasourceTemplate": "git-tags",
+      "versioningTemplate": "regex:^kubernetes-versions-(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})(?:-(?<build>\\d+))?$"
     }
   ],
   "packageRules": [
@@ -47,9 +47,9 @@
       "minimumReleaseAgeBehaviour": "timestamp-optional"
     },
     {
-      "description": "Moves the kubernetes-versions.json commit; git-refs reports no release timestamps",
+      "description": "Moves kubernetes-versions.json to its newest kubernetes-versions tag; git tags report no release timestamps",
       "matchDatasources": [
-        "git-refs"
+        "git-tags"
       ],
       "matchPackageNames": [
         "https://github.com/kadet-hub/renovate-config"

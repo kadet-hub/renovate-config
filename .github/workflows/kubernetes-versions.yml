@@ -15,21 +15,31 @@ jobs:
   update:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    permissions:
-      contents: write
-      pull-requests: write
     env:
       BRANCH: update/kubernetes-versions
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Compute the list
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python3 scripts/kubernetes_versions.py kubernetes-versions.json
 
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Open or update the pull request
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          APP_SLUG: ${{ steps.app.outputs.app-slug }}
         run: |
           if git diff --quiet -- kubernetes-versions.json; then
             echo "kubernetes-versions.json is current"
@@ -39,8 +49,8 @@ jobs:
           if git fetch --quiet origin "$BRANCH" && git diff --quiet FETCH_HEAD -- kubernetes-versions.json; then
             echo "$BRANCH already has this list"
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898583+github-actions[bot]@users.noreply.github.com"
+            git config user.name "${APP_SLUG}[bot]"
+            git config user.email "$(gh api "/users/$APP_SLUG%5Bbot%5D" --jq .id)+${APP_SLUG}[bot]@users.noreply.github.com"
             git switch --create "$BRANCH"
             git commit --signoff --message "chore: update kubernetes-versions.json" -- kubernetes-versions.json
             git push --force origin "$BRANCH"

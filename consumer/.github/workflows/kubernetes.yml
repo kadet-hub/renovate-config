@@ -16,9 +16,10 @@ jobs:
       kubernetes: ${{ steps.read.outputs.kubernetes }}
     steps:
       - id: read
+        env:
+          URL: https://raw.githubusercontent.com/kadet-hub/renovate-config/fdd859537fcd6a16e036e4f6aa4557e5d5fb1a54/kubernetes-versions.json # kubernetes-versions-2026-10-25
         run: |
-          curl -fsSL https://raw.githubusercontent.com/kadet-hub/renovate-config/fdd859537fcd6a16e036e4f6aa4557e5d5fb1a54/kubernetes-versions.json \
-            | jq -r '"kind=\(.kind | tojson)", "kubernetes=\(.kubernetes | tojson)"' >> "$GITHUB_OUTPUT"
+          curl -fsSL "$URL" | jq -r '"kind=\(.kind | tojson)", "kubernetes=\(.kubernetes | tojson)"' >> "$GITHUB_OUTPUT"
 
   test:
     needs: kubernetes-versions
