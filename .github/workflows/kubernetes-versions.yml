@@ -1,0 +1,51 @@
+name: kubernetes-versions
+
+on:
+  schedule:
+    - cron: "23 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kubernetes-versions
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      BRANCH: update/kubernetes-versions
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compute the list
+        run: python3 scripts/kubernetes_versions.py kubernetes-versions.json
+
+      - name: Open or update the pull request
+        run: |
+          if git diff --quiet -- kubernetes-versions.json; then
+            echo "kubernetes-versions.json is current"
+            exit 0
+          fi
+          gh auth setup-git
+          if git fetch --quiet origin "$BRANCH" && git diff --quiet FETCH_HEAD -- kubernetes-versions.json; then
+            echo "$BRANCH already has this list"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898583+github-actions[bot]@users.noreply.github.com"
+            git switch --create "$BRANCH"
+            git commit --signoff --message "chore: update kubernetes-versions.json" -- kubernetes-versions.json
+            git push --force origin "$BRANCH"
+          fi
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --base main --head "$BRANCH" --title "chore: update kubernetes-versions.json" \
+              --body "Computed by the kubernetes-versions workflow, see docs/specs/kubernetes-versions.md. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi
