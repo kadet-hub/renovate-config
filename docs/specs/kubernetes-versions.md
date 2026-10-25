@@ -1,7 +1,7 @@
 # Kubernetes versions to test against
 
 Status: Draft
-Code: `kubernetes-versions.json`, `scripts/kubernetes_versions.py`, `test/test_kubernetes_versions.py`, `test/kind-release-v0.33.0.json`, `.github/workflows/kubernetes-versions.yml`, `default.json` (KV-9), `consumer/`
+Code: `kubernetes-versions.json`, `scripts/kubernetes_versions.py`, `test/test_kubernetes_versions.py`, `test/kind-release-v0.33.0.json`, `.github/workflows/kubernetes-versions.yml`, `.github/workflows/kubernetes-versions-tag.yml`, `default.json` (KV-9), `consumer/`
 Verified against: main @ fdd8595
 
 ## Problem
@@ -14,8 +14,9 @@ no rule that adds a matrix entry for a new minor and drops the oldest.
 
 This repository therefore publishes one machine-readable list,
 `kubernetes-versions.json`, that a scheduled workflow recomputes from primary
-sources. Consumers fetch it at a renovate-config commit, and the preset lets
-Renovate move that commit.
+sources. Every change of the list on `main` gets a tag. Consumers fetch the
+file at a tagged commit, and the preset lets Renovate move them to the next
+tag.
 
 ## File format
 
@@ -156,58 +157,95 @@ the runner's system Python and needs no dependency pin.
   commit it to the branch `update/kubernetes-versions` and open one pull
   request from that branch unless one is open.
 
-  The job has `contents: write` and `pull-requests: write` and uses
-  `GITHUB_TOKEN`. The checkout keeps no credentials; `gh auth setup-git` gives
-  git the token only for the push. The workflow has no `pull_request_target`
-  trigger and runs only code from `main`. The `main` ruleset requires a pull
-  request, so the token cannot push to `main`.
+  The computation reads the sources with `GITHUB_TOKEN`, which has only
+  `contents: read`. Push and pull request use a
+  token of the GitHub App (DEC-5). The checkout keeps no credentials;
+  `gh auth setup-git` gives git the App token only for the push. The workflow
+  has no `pull_request_target` trigger and runs only code from `main`. The
+  `main` ruleset requires a pull request, so the token cannot push to `main`.
 
   When the branch already holds the computed file, nothing is pushed, so an
   open pull request does not get a new commit every day. When the file
   changes again, the branch is reset onto `main` with one new commit.
 
-  - Test: manual: `workflow_dispatch` run after merge (OQ-1)
+  - Test: manual: `workflow_dispatch` run after merge
   - Since: this change
 
-Pull requests created with `GITHUB_TOKEN` do not trigger `pull_request`
-workflows, so `test` does not run on them by itself (OQ-2).
+- KV-10: `.github/workflows/kubernetes-versions-tag.yml` MUST create the tag
+  `kubernetes-versions-YYYY-MM-DD` (UTC date of the run) on the pushed head of
+  `main` when the push changed `kubernetes-versions.json`. A further change on
+  the same day gets `-2`, then `-3` and so on. A head that already has a
+  `kubernetes-versions-*` tag gets no second one.
+
+  The workflow runs on every push to `main` and compares the file between
+  the push's `before` and `after` commits, so a merge of the update pull
+  request and any other commit that changes the file both count. A `before`
+  commit git does not know fails the run. The tag is a lightweight tag
+  created through the git refs API with the App token (DEC-5); no ruleset
+  covers tags in this repository. Renovate's regex versioning sorts the
+  suffixed tags after the plain one and `-10` after `-3` (checked with
+  Renovate 44.161.2).
+
+  - Test: `NextTag` in `test/test_kubernetes_versions.py`
+  - Since: this change
+
+### DEC-5: a GitHub App token for writes
+
+The workflows take a token of the existing GitHub App `kadet-hub-upstream`
+with `actions/create-github-app-token`, scoped to this repository and to
+`contents: write` (both workflows) and `pull-requests: write` (update). The
+App's client ID is the repository variable `APP_CLIENT_ID`, its private key
+the secret `APP_PRIVATE_KEY`.
+
+`GITHUB_TOKEN` was considered. The organisation and repository settings do
+not allow it to create pull requests, and pull requests it creates do not
+trigger `pull_request` workflows, so `test` would not run on the update pull
+request. Pull requests from an App token do trigger `test`.
 
 ## Consumers
 
-A consumer fetches the file from `raw.githubusercontent.com` at a full
-renovate-config commit SHA. The README has the snippets for a GitHub Actions
-matrix and for a shell script; `consumer/` holds the same snippets as test
-fixtures.
+A consumer fetches the file from `raw.githubusercontent.com` at the commit
+SHA of a `kubernetes-versions-*` tag and writes the tag after the URL as a
+comment:
 
-- KV-8: Consumers MUST fetch the file by commit SHA, never by branch.
+```
+https://raw.githubusercontent.com/kadet-hub/renovate-config/<commit>/kubernetes-versions.json # <tag>
+```
+
+The README has the snippets for a GitHub Actions matrix and for a shell
+script; `consumer/` holds the same snippets as test fixtures.
+
+- KV-8: Consumers MUST fetch the file by commit SHA, never by branch or tag.
 
   A branch URL would change the tested versions without a reviewed change in
-  the consumer.
+  the consumer. A tag can be moved; the SHA cannot.
 
   - Test: none
   - Since: this change
 
-- KV-9: The preset MUST update the commit SHA in
-  `https://raw.githubusercontent.com/kadet-hub/renovate-config/<sha>/kubernetes-versions.json`
-  in GitHub Actions workflows and `*.sh` files to the head of `main`, with the
-  `git-refs` datasource, the label `kadet-hub`, no automerge and
-  `minimumReleaseAgeBehaviour: timestamp-optional`.
+- KV-9: The preset MUST update commit and tag in that form, in GitHub Actions
+  workflows and `*.sh` files, to the newest `kubernetes-versions-*` tag, with
+  the `git-tags` datasource, regex versioning over date and suffix, the label
+  `kadet-hub`, no automerge and `minimumReleaseAgeBehaviour:
+  timestamp-optional`.
 
-  git-refs reports no timestamps. A Renovate 44.161.2 lookup with a consumer
-  config that sets `minimumReleaseAge: "3 days"` and
-  `minimumReleaseAgeBehaviour: timestamp-required` marked the digest update
-  pending without the rule and proposed it with the rule.
+  Tags not matching `kubernetes-versions-YYYY-MM-DD[-N]` are not versions
+  under that regex and are ignored. git tags report no timestamps. A Renovate
+  44.161.2 lookup with `minimumReleaseAge: "3 days"` and
+  `minimumReleaseAgeBehaviour: timestamp-required` marked git-tags updates
+  pending without `timestamp-optional` and proposed them, with tag and commit,
+  with it.
 
   - Test: `test` workflow, extract of `consumer/` against `test/expected.json`
   - Since: this change
 
-### DEC-4: pin to the head of main, not to tags
+### DEC-4: tags per list change, pinned by SHA
 
-The repository has no tags, and a tag per data change would need a release
-step in the update workflow. With `git-refs` on `main`, every merge to
-`main` moves the SHA in consumers, also merges that do not touch the file.
-That is one extra Renovate pull request per merge in each consumer, accepted
-for now (OQ-3).
+Consumers follow tags that the tag workflow creates only when the list
+changes (KV-10), so a merge to `main` that does not touch the file does not
+reach them. Following the head of `main` with the `git-refs` datasource
+needs no tagging, but would open a pull request in every consumer for every
+merge here. Fetching by tag name was rejected for KV-8.
 
 ## Acceptance criteria
 
@@ -218,36 +256,29 @@ for now (OQ-3).
 - AC-2: A new kind release with a new minor moves the window and drops the
   oldest minor; a new Kubernetes minor without a kind image changes nothing.
   Checks KV-2, KV-3.
-- AC-3: The `test` workflow extracts the renovate-config SHA from both
-  consumer snippets. Checks KV-9.
+- AC-3: The `test` workflow extracts commit and tag from both consumer
+  snippets. Checks KV-9.
+- AC-4: A push that does not change the file creates no tag; a second change
+  on one day gets the `-2` suffix. Checks KV-10.
 
 ## Open questions
 
-- OQ-1: The organisation and repository settings disallow GitHub Actions to
-  create pull requests (`can_approve_pull_request_reviews: false`), so
-  `gh pr create` in KV-7 fails with `GITHUB_TOKEN` after the push. The
-  maintainer either enables "Allow GitHub Actions to create and approve pull
-  requests" for the organisation and this repository, or the workflow uses a
-  GitHub App token instead.
-- OQ-2: `test` does not run on the update pull request (KV-7). Options are
-  closing and reopening it by hand, a GitHub App token (whose pull requests
-  do trigger workflows), or accepting it, since the unit tests run on `main`
-  after the merge.
-- OQ-3: Whether consumer pull requests for merges that do not touch the file
-  (DEC-4) are too noisy, which would argue for tags.
+None.
 
 ## Implementation inventory
 
 | Path | Role |
 |---|---|
 | `kubernetes-versions.json` | The list (KV-1) |
-| `scripts/kubernetes_versions.py` | Computation (KV-2 to KV-6) and fetch of the three sources |
+| `scripts/kubernetes_versions.py` | Computation (KV-2 to KV-6), fetch of the three sources, tag name (KV-10) |
 | `test/test_kubernetes_versions.py` | Unit tests and the committed file's schema check |
 | `test/kind-release-v0.33.0.json` | Fixture: tag, body and linux asset digests of kind v0.33.0 |
 | `.github/workflows/kubernetes-versions.yml` | Daily update and pull request (KV-7) |
+| `.github/workflows/kubernetes-versions-tag.yml` | Tag per list change on `main` (KV-10) |
 | `.github/workflows/test.yml` | Runs the unit tests and the extract test |
-| `default.json` | git-refs manager and packageRule (KV-9) |
+| `default.json` | git-tags manager and packageRule (KV-9) |
 | `consumer/` | README snippets as extract fixtures |
+| Variable `APP_CLIENT_ID`, secret `APP_PRIVATE_KEY` | GitHub App `kadet-hub-upstream` (DEC-5) |
 | Source: `https://dl.k8s.io/release/stable.txt` | Newest stable minor |
 | Source: `https://api.github.com/repos/kubernetes-sigs/kind/releases/latest` | Node images, kind version and binary digests |
 | Source: `https://api.github.com/repos/yannh/kubernetes-json-schema/git/trees/master` | kubeconform schema directories |
