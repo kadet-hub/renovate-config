@@ -57,3 +57,4 @@ The `test` workflow validates `default.json` and `renovate.json` with
 `--platform=local --dry-run=extract` and the preset over the fixtures in
 `inventory/` and `platform/inventory/` and compares the extracted
 dependencies with `test/expected.json`.
+
