@@ -186,6 +186,11 @@ the runner's system Python and needs no dependency pin.
   suffixed tags after the plain one and `-10` after `-3` (checked with
   Renovate 44.161.2).
 
+  The runs share one concurrency group with `queue: max`, so they run one
+  at a time and each checkout has the tags of the runs before it. Two
+  parallel runs on one day would both pick the same name, and the second
+  ref creation would fail.
+
   - Test: `NextTag` in `test/test_kubernetes_versions.py`
   - Since: this change
 
