@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: kubernetes-versions-tag
+  queue: max
+
 jobs:
   tag:
     runs-on: ubuntu-24.04
