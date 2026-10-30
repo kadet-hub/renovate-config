@@ -1,5 +1,17 @@
 [
   {
+    "packageFile": "consumer/.github/workflows/kubernetes.yml",
+    "depName": "kadet-hub/renovate-config",
+    "currentValue": "kubernetes-versions-2026-10-25",
+    "currentDigest": "fdd859537fcd6a16e036e4f6aa4557e5d5fb1a54"
+  },
+  {
+    "packageFile": "consumer/kubernetes.sh",
+    "depName": "kadet-hub/renovate-config",
+    "currentValue": "kubernetes-versions-2026-10-25",
+    "currentDigest": "fdd859537fcd6a16e036e4f6aa4557e5d5fb1a54"
+  },
+  {
     "packageFile": "inventory/targets/example.yml",
     "depName": "ghcr.io/kadet-hub/external-secrets",
     "currentValue": "1.0.0",

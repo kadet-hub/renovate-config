@@ -20,6 +20,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Unit tests for the kubernetes-versions computation
+        run: python3 -m unittest discover --start-directory test --verbose
+
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.0
@@ -38,7 +41,7 @@ jobs:
         run: |
           npx --yes --package "renovate@$RENOVATE_VERSION" -- renovate --platform=local --dry-run=extract > "$RUNNER_TEMP/extract.json"
           jq -s '[.[] | select(.msg == "Extracted dependencies") | .packageFiles.regex[]?
-            | select(.packageFile | test("(^|/)inventory/")) | .packageFile as $f | .deps[]
+            | select(.packageFile | test("(^|/)inventory/|^consumer/")) | .packageFile as $f | .deps[]
             | {packageFile: $f, depName, currentValue, currentDigest}] | sort_by(.packageFile, .depName)' \
             "$RUNNER_TEMP/extract.json" > "$RUNNER_TEMP/got.json"
           diff -u test/expected.json "$RUNNER_TEMP/got.json"

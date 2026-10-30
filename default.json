@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Update kadet-hub generators pinned as ghcr.io/kadet-hub/<name>:<version>@sha256:<digest> in Kapitan inventories",
+  "description": "Update kadet-hub generators pinned as ghcr.io/kadet-hub/<name>:<version>@sha256:<digest> in Kapitan inventories, and the renovate-config commit that kubernetes-versions.json is fetched at",
   "customManagers": [
     {
       "customType": "regex",
@@ -14,6 +14,21 @@
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "renovate-config commit and kubernetes-versions tag of kubernetes-versions.json URLs",
+      "managerFilePatterns": [
+        "/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/",
+        "/\\.sh$/"
+      ],
+      "matchStrings": [
+        "raw\\.githubusercontent\\.com/kadet-hub/renovate-config/(?<currentDigest>[0-9a-f]{40})/kubernetes-versions\\.json # (?<currentValue>kubernetes-versions-\\S+)"
+      ],
+      "depNameTemplate": "kadet-hub/renovate-config",
+      "packageNameTemplate": "https://github.com/kadet-hub/renovate-config",
+      "datasourceTemplate": "git-tags",
+      "versioningTemplate": "regex:^kubernetes-versions-(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})(?:-(?<build>\\d+))?$"
     }
   ],
   "packageRules": [
@@ -24,6 +39,20 @@
       ],
       "matchPackageNames": [
         "ghcr.io/kadet-hub/*"
+      ],
+      "addLabels": [
+        "kadet-hub"
+      ],
+      "automerge": false,
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
+    },
+    {
+      "description": "Moves kubernetes-versions.json to its newest kubernetes-versions tag; git tags report no release timestamps",
+      "matchDatasources": [
+        "git-tags"
+      ],
+      "matchPackageNames": [
+        "https://github.com/kadet-hub/renovate-config"
       ],
       "addLabels": [
         "kadet-hub"
