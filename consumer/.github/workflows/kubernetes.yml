@@ -10,7 +10,7 @@ defaults:
 
 jobs:
   kubernetes-versions:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       kind: ${{ steps.read.outputs.kind }}
       kubernetes: ${{ steps.read.outputs.kubernetes }}
@@ -23,7 +23,7 @@ jobs:
 
   test:
     needs: kubernetes-versions
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     name: kubernetes ${{ matrix.minor }}
     strategy:
       fail-fast: false
