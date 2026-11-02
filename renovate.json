@@ -4,7 +4,6 @@
     "config:recommended",
     "helpers:pinGitHubActionDigests"
   ],
-  "automerge": false,
   "customManagers": [
     {
       "description": "Tool versions marked with a renovate comment in the workflows",
@@ -15,6 +14,30 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*[A-Z_]+: (?<currentValue>\\S+)"
       ]
+    }
+  ],
+  "platformAutomerge": false,
+  "packageRules": [
+    {
+      "description": "Renovate merges its own pull request once every check passed; majors wait for a maintainer",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "a digest update of an action under the same version is a moved tag",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "digest"
+      ],
+      "automerge": false
     }
   ]
 }
