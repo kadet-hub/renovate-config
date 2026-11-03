@@ -13,6 +13,7 @@ NODE_IMAGE = re.compile(r"kindest/node:v(\d+)\.(\d+)\.(\d+)@sha256:[0-9a-f]{64}"
 KIND_ASSETS = {"linux-amd64": "kind-linux-amd64", "linux-arm64": "kind-linux-arm64"}
 WINDOW = 3
 TAG_PREFIX = "kubernetes-versions-"
+TAG = re.compile(TAG_PREFIX + r"(\d{4}-\d{2}-\d{2})(?:-(\d+))?")
 
 
 def compute(stable, release, schema_dirs):
@@ -60,15 +61,24 @@ def next_tag(changed, date, tags, head_tags):
     return tag
 
 
-def tag(before, after):
+def newest_tag(tags):
+    """The tag Renovate's regex versioning sorts last (KV-9), or None."""
+    keyed = [(m[1], int(m[2] or 1), t) for t in tags if (m := TAG.fullmatch(t))]
+    return max(keyed)[2] if keyed else None
+
+
+def tag(after):
     git = lambda *a: subprocess.run(["git", *a], capture_output=True, text=True)
-    diff = git("diff", "--quiet", before, after, "--", "kubernetes-versions.json")
-    if diff.returncode not in (0, 1):
-        raise RuntimeError(diff.stderr)
-    changed = diff.returncode == 1
-    tags = set(git("tag", "--list", TAG_PREFIX + "*").stdout.split())
+    tags = git("tag", "--list", TAG_PREFIX + "*").stdout.split()
+    newest = newest_tag(tags)
+    changed = True
+    if newest:
+        diff = git("diff", "--quiet", newest, after, "--", "kubernetes-versions.json")
+        if diff.returncode not in (0, 1):
+            raise RuntimeError(diff.stderr)
+        changed = diff.returncode == 1
     head_tags = git("tag", "--points-at", after).stdout.split()
-    print(next_tag(changed, datetime.now(timezone.utc).date().isoformat(), tags, head_tags) or "")
+    print(next_tag(changed, datetime.now(timezone.utc).date().isoformat(), set(tags), head_tags) or "")
 
 
 def fetch(url, token=None):
@@ -91,6 +101,6 @@ def main(path):
 
 if __name__ == "__main__":
     if sys.argv[1] == "tag":
-        tag(sys.argv[2], sys.argv[3])
+        tag(sys.argv[2])
     else:
         main(sys.argv[1])

@@ -1,4 +1,9 @@
+import contextlib
+import io
 import json
+import os
+import subprocess
+import tempfile
 import re
 import sys
 import unittest
@@ -6,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from kubernetes_versions import compute, next_tag  # noqa: E402
+from kubernetes_versions import compute, newest_tag, next_tag, tag  # noqa: E402
 
 RELEASE = json.loads((ROOT / "test/kind-release-v0.33.0.json").read_text())
 DIGEST = "0" * 64
@@ -95,6 +100,62 @@ class NextTag(unittest.TestCase):
     def test_no_second_tag_on_a_tagged_head(self):
         tags = {"kubernetes-versions-2026-10-25"}
         self.assertIsNone(next_tag(True, "2026-10-25", tags, ["kubernetes-versions-2026-10-25"]))
+
+
+class NewestTag(unittest.TestCase):
+    def test_no_tags(self):
+        self.assertIsNone(newest_tag([]))
+
+    def test_sorts_by_date_then_numeric_suffix(self):
+        tags = ["kubernetes-versions-2026-11-02-10", "kubernetes-versions-2026-11-02", "kubernetes-versions-2026-11-02-3",
+                "kubernetes-versions-2026-10-30-12", "kubernetes-versions-old"]
+        self.assertEqual(newest_tag(tags), "kubernetes-versions-2026-11-02-10")
+        self.assertEqual(newest_tag(tags[1:]), "kubernetes-versions-2026-11-02-3")
+
+
+class TagCommand(unittest.TestCase):
+    """tag() against a scratch repository: the head is compared with the newest tag."""
+
+    def git(self, *args):
+        return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid",
+                               "-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false", *args],
+                              cwd=self.repo, check=True, capture_output=True, text=True).stdout.strip()
+
+    def commit(self, content=None):
+        if content is not None:
+            Path(self.repo, "kubernetes-versions.json").write_text(content)
+        self.git("add", "-A")
+        self.git("commit", "-q", "--allow-empty", "-m", "c")
+        return self.git("rev-parse", "HEAD")
+
+    def tag_for(self, after):
+        out, cwd = io.StringIO(), os.getcwd()
+        os.chdir(self.repo)
+        try:
+            with contextlib.redirect_stdout(out):
+                tag(after)
+        finally:
+            os.chdir(cwd)
+        return out.getvalue().strip()
+
+    def setUp(self):
+        self.repo = tempfile.mkdtemp()
+        self.addCleanup(subprocess.run, ["rm", "-rf", self.repo])
+        self.git("init", "-q")
+
+    def test_first_list_is_tagged(self):
+        self.assertTrue(self.tag_for(self.commit("a")).startswith("kubernetes-versions-"))
+
+    def test_unchanged_list_is_not_tagged(self):
+        self.commit("a")
+        self.git("tag", "kubernetes-versions-2026-11-01")
+        self.assertEqual(self.tag_for(self.commit()), "")
+
+    def test_missed_tag_heals_on_the_next_push(self):
+        self.commit("a")
+        self.git("tag", "kubernetes-versions-2026-11-01")
+        self.commit("b")  # its tag run failed
+        self.assertTrue(self.tag_for(self.commit()).startswith("kubernetes-versions-"))
 
 
 class CommittedFile(unittest.TestCase):
