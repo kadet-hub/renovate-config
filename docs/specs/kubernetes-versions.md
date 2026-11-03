@@ -173,15 +173,24 @@ the runner's system Python and needs no dependency pin.
 
 - KV-10: `.github/workflows/kubernetes-versions-tag.yml` MUST create the tag
   `kubernetes-versions-YYYY-MM-DD` (UTC date of the run) on the pushed head of
-  `main` when the push changed `kubernetes-versions.json`. A further change on
-  the same day gets `-2`, then `-3` and so on. A head that already has a
+  `main` when `kubernetes-versions.json` there differs from the file at the
+  newest `kubernetes-versions-*` tag, or no such tag exists. A further change
+  on the same day gets `-2`, then `-3` and so on. A head that already has a
   `kubernetes-versions-*` tag gets no second one.
 
-  The workflow runs on every push to `main` and compares the file between
-  the push's `before` and `after` commits, so a merge of the update pull
-  request and any other commit that changes the file both count. A `before`
-  commit git does not know fails the run. The tag is a lightweight tag
-  created through the git refs API with the App token (DEC-5); no ruleset
+  The workflow runs on every push to `main`, so a merge of the update pull
+  request and any other commit that changes the file both count. The newest
+  tag is the one Renovate's regex versioning sorts last.
+
+  Comparing with the newest tag instead of the push's `before` commit lets a
+  missed tag heal: when a run fails, the next push to `main` tags its own
+  head. The rerun of the run for 843255e failed with "Resource not
+  accessible by integration" after `main` had moved on. The likely cause,
+  not confirmed by GitHub documentation, is that an App token without the
+  `workflows` permission cannot create a ref on a commit whose
+  `.github/workflows` differ from `main`. The head of a push matches `main`.
+
+  The tag is a lightweight tag created through the git refs API with the App token (DEC-5); no ruleset
   covers tags in this repository. Renovate's regex versioning sorts the
   suffixed tags after the plain one and `-10` after `-3` (checked with
   Renovate 44.161.2).
@@ -191,8 +200,8 @@ the runner's system Python and needs no dependency pin.
   parallel runs on one day would both pick the same name, and the second
   ref creation would fail.
 
-  - Test: `NextTag` in `test/test_kubernetes_versions.py`
-  - Since: this change
+  - Test: `NextTag` and `NewestTag` in `test/test_kubernetes_versions.py`
+  - Since: this change, #18
 
 ### DEC-5: a GitHub App token for writes
 
@@ -264,7 +273,8 @@ merge here. Fetching by tag name was rejected for KV-8.
 - AC-3: The `test` workflow extracts commit and tag from both consumer
   snippets. Checks KV-9.
 - AC-4: A push that does not change the file creates no tag; a second change
-  on one day gets the `-2` suffix. Checks KV-10.
+  on one day gets the `-2` suffix; the push after a missed tag tags its head.
+  Checks KV-10.
 
 ## Open questions
 
