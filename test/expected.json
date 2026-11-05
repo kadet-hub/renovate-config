@@ -30,6 +30,12 @@
     "currentDigest": "sha256:8ff7c02952f48255a456366aa00d7677c354b8993bd42fe97425509ac62a5c96"
   },
   {
+    "packageFile": "platform/fetch/targets/recipes.yml",
+    "depName": "ghcr.io/kadet-hub/recipes/valkey",
+    "currentValue": "1.0.0",
+    "currentDigest": "sha256:ae790988ac301ea60ae3fd0e9a2aaad8f2386241f3ef27f0a40ffa853e4fd687"
+  },
+  {
     "packageFile": "platform/inventory/targets/cluster.yml",
     "depName": "ghcr.io/kadet-hub/kubernetes",
     "currentValue": "1.0.0",
