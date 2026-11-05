@@ -1,0 +1,9 @@
+# Only the recipe the targets include. The consumer workflow adds postgresql
+# and valkey at the digests immich's index record lists, so an update of this
+# pin alone is complete.
+parameters:
+  kapitan:
+    dependencies:
+      - type: oci
+        source: ghcr.io/kadet-hub/recipes/immich:1.0.0@sha256:7a3d4b118f952edb9606cb176769ebf1a7675a8a76f0a993083ec25c0d183bb6
+        output_path: inventory/classes/recipes/immich

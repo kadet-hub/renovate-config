@@ -1,7 +1,8 @@
 # renovate-config
 
 Renovate preset that updates Kapitan generators from
-[kadet-hub](https://kadet-hub.org) in your Kapitan inventory.
+[kadet-hub](https://kadet-hub.org) in your Kapitan inventory, and recipes
+in your fetch inventory.
 
 ```json
 {
@@ -28,6 +29,11 @@ at `208fedc88f7b544b0614eeac3a96f221ac5ada2b`, the merge of
 later. Older commits reject a tag in the source with `source must be
 <host>/<repository>@sha256:<digest>`. Sources without a tag are not updated.
 
+Recipe updates need the consumer workflow at the merge of
+[kadet-hub/registry#536](https://github.com/kadet-hub/registry/pull/536) or
+later, which adds the recipes a pinned recipe includes from the index.
+Older commits refuse a fetch inventory that does not pin them.
+
 ## What it does
 
 A regex manager finds the source in `**/inventory/**/*.yml` and
@@ -36,6 +42,18 @@ root or in a nested Kapitan project. It looks up the generator's tags on
 ghcr.io with the `docker` datasource and `semver` versioning. Each update is
 its own pull request with the label `kadet-hub` and changes tag and digest
 together. The preset sets `automerge: false` for these updates.
+
+A second manager finds recipe sources
+`ghcr.io/kadet-hub/recipes/<name>:<version>@sha256:<digest>` in
+`**/fetch/**/*.yml` and `**/fetch/**/*.yaml`, the fetch inventory of the
+consumer guide's section
+[Recipes](https://github.com/kadet-hub/registry/blob/main/docs/consumers.md#recipes).
+Each recipe update is its own pull request as well. Pin only the recipes
+your targets include. The consumer workflow adds the recipes they include
+at the digests the index lists, so an update of one pin is complete. A pin
+of an included recipe is updated on its own, and the workflow refuses that
+update until you delete the pin. A fetch inventory at another path needs
+the manager's `managerFilePatterns` extended in your own configuration.
 
 ghcr.io reports no release timestamps, so `minimumReleaseAge` cannot delay
 generator updates. If your own configuration sets `minimumReleaseAge`,
@@ -153,7 +171,7 @@ Both expect kubeconform on the `PATH`, the script also kind.
 The `test` workflow validates `default.json` and `renovate.json` with
 `renovate-config-validator --strict`, then runs Renovate with
 `--platform=local --dry-run=extract` and the preset over the fixtures in
-`inventory/` and `platform/inventory/` and compares the extracted
+`inventory/`, `platform/inventory/` and `fetch/` and compares the extracted
 dependencies with `test/expected.json`. The fixtures in `consumer/` are the
 snippets above with a commit and a tag filled in. `python3 -m unittest discover --start-directory test`
 runs the unit tests for the `kubernetes-versions.json` computation.

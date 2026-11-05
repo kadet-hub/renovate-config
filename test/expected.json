@@ -12,6 +12,12 @@
     "currentDigest": "fdd859537fcd6a16e036e4f6aa4557e5d5fb1a54"
   },
   {
+    "packageFile": "fetch/targets/recipes.yml",
+    "depName": "ghcr.io/kadet-hub/recipes/immich",
+    "currentValue": "1.0.0",
+    "currentDigest": "sha256:7a3d4b118f952edb9606cb176769ebf1a7675a8a76f0a993083ec25c0d183bb6"
+  },
+  {
     "packageFile": "inventory/targets/example.yml",
     "depName": "ghcr.io/kadet-hub/external-secrets",
     "currentValue": "1.0.0",

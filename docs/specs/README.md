@@ -30,3 +30,4 @@ every acceptance criterion names the requirements it checks.
 | Spec | Area |
 |---|---|
 | [kubernetes-versions.md](kubernetes-versions.md) | `kubernetes-versions.json`, its update workflow and how consumers pin it |
+| [preset.md](preset.md) | The managers of `default.json` for generator and recipe pins |
