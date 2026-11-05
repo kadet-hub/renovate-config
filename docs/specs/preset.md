@@ -1,7 +1,7 @@
 # Preset for kadet-hub generators and recipes
 
 Status: Draft
-Code: `default.json` (PRE-1, PRE-2), `inventory/`, `platform/inventory/`, `fetch/`, `test/expected.json`, `.github/workflows/test.yml`
+Code: `default.json` (PRE-1, PRE-2), `inventory/`, `platform/inventory/`, `fetch/`, `platform/fetch/`, `test/expected.json`, `.github/workflows/test.yml`
 Verified against: main @ 8603833
 
 ## Problem
@@ -56,5 +56,5 @@ own.
   own, so its update and an update of the parent to a version that
   includes another digest fail until the consumer deletes the pin.
 
-  - Test: workflow `test`, step "Extract the fixture inventory with the preset" (`fetch/targets/recipes.yml` pins `immich` only and extracts as one dependency; the recipe source in `inventory/targets/example.yml` extracts as none)
+  - Test: workflow `test`, step "Extract the fixture inventory with the preset" (`fetch/targets/recipes.yml` pins `immich` only and extracts as one dependency; `platform/fetch/targets/recipes.yml` pins `valkey` one directory deeper and extracts as one dependency; the recipe source in `inventory/targets/example.yml` extracts as none)
   - Since: #21
