@@ -29,6 +29,11 @@ at `208fedc88f7b544b0614eeac3a96f221ac5ada2b`, the merge of
 later. Older commits reject a tag in the source with `source must be
 <host>/<repository>@sha256:<digest>`. Sources without a tag are not updated.
 
+Recipe updates need the consumer workflow at the merge of
+[kadet-hub/registry#536](https://github.com/kadet-hub/registry/pull/536) or
+later, which adds the recipes a pinned recipe includes from the index.
+Older commits refuse a fetch inventory that does not pin them.
+
 ## What it does
 
 A regex manager finds the source in `**/inventory/**/*.yml` and
