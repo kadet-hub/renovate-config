@@ -52,7 +52,7 @@ own.
 
   A fetch inventory written before the workflow added included recipes
   (CON-7) also pins them. The workflow accepts such a pin at the digest the
-  parent's record lists (CON-9, DEC-31 there). Renovate updates it on its
+  parent's record lists (CON-9, DEC-45 there). Renovate updates it on its
   own, so its update and an update of the parent to a version that
   includes another digest fail until the consumer deletes the pin.
 
