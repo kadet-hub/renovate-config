@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Update kadet-hub generators pinned as ghcr.io/kadet-hub/<name>:<version>@sha256:<digest> in Kapitan inventories, and the renovate-config commit that kubernetes-versions.json is fetched at",
+  "description": "Update kadet-hub generators pinned as ghcr.io/kadet-hub/<name>:<version>@sha256:<digest> in Kapitan inventories, kadet-hub recipes pinned as ghcr.io/kadet-hub/recipes/<name>:<version>@sha256:<digest> in fetch inventories, and the renovate-config commit that kubernetes-versions.json is fetched at",
   "customManagers": [
     {
       "customType": "regex",
@@ -11,6 +11,19 @@
       ],
       "matchStrings": [
         "source:\\s*[\"']?(?<depName>ghcr\\.io/kadet-hub/[a-z][a-z0-9-]{1,38}):(?<currentValue>[A-Za-z0-9_][A-Za-z0-9._-]{0,127})@(?<currentDigest>sha256:[0-9a-f]{64})"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "kadet-hub recipes in the fetch inventory; the consumer workflow adds the recipes they include from the index",
+      "managerFilePatterns": [
+        "**/fetch/**/*.yml",
+        "**/fetch/**/*.yaml"
+      ],
+      "matchStrings": [
+        "source:\\s*[\"']?(?<depName>ghcr\\.io/kadet-hub/recipes/[a-z][a-z0-9-]{1,38}):(?<currentValue>[A-Za-z0-9_][A-Za-z0-9._-]{0,127})@(?<currentDigest>sha256:[0-9a-f]{64})"
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "semver"
@@ -33,12 +46,13 @@
   ],
   "packageRules": [
     {
-      "description": "One labelled pull request per generator update, never merged automatically and never held by a minimumReleaseAge: ghcr.io reports no release timestamps",
+      "description": "One labelled pull request per generator or recipe update, never merged automatically and never held by a minimumReleaseAge: ghcr.io reports no release timestamps",
       "matchDatasources": [
         "docker"
       ],
       "matchPackageNames": [
-        "ghcr.io/kadet-hub/*"
+        "ghcr.io/kadet-hub/*",
+        "ghcr.io/kadet-hub/recipes/*"
       ],
       "addLabels": [
         "kadet-hub"

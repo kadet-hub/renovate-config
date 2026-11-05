@@ -14,3 +14,7 @@ parameters:
       - type: oci
         source: ghcr.io/example/other:1.0.0@sha256:0000000000000000000000000000000000000000000000000000000000000000
         output_path: lib/other
+      # Not matched: a recipe belongs in the fetch inventory.
+      - type: oci
+        source: ghcr.io/kadet-hub/recipes/valkey:1.0.2@sha256:263dfc2e41097c7c6bd016baadcc8384e79afd10910506a892e9994ee7ece918
+        output_path: inventory/classes/recipes/valkey
