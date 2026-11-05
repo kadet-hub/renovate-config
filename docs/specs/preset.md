@@ -57,4 +57,4 @@ own.
   includes another digest fail until the consumer deletes the pin.
 
   - Test: workflow `test`, step "Extract the fixture inventory with the preset" (`fetch/targets/recipes.yml` pins `immich` only and extracts as one dependency; the recipe source in `inventory/targets/example.yml` extracts as none)
-  - Since: this change
+  - Since: #21
