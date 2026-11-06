@@ -1,0 +1,8 @@
+# A fetch inventory one directory below the repository root, as in a
+# repository with one Kapitan project per directory.
+parameters:
+  kapitan:
+    dependencies:
+      - type: oci
+        source: ghcr.io/kadet-hub/recipes/valkey:1.0.0@sha256:ae790988ac301ea60ae3fd0e9a2aaad8f2386241f3ef27f0a40ffa853e4fd687
+        output_path: inventory/classes/recipes/valkey

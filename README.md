@@ -171,7 +171,7 @@ Both expect kubeconform on the `PATH`, the script also kind.
 The `test` workflow validates `default.json` and `renovate.json` with
 `renovate-config-validator --strict`, then runs Renovate with
 `--platform=local --dry-run=extract` and the preset over the fixtures in
-`inventory/`, `platform/inventory/` and `fetch/` and compares the extracted
+`inventory/`, `platform/inventory/`, `fetch/` and `platform/fetch/` and compares the extracted
 dependencies with `test/expected.json`. The fixtures in `consumer/` are the
 snippets above with a commit and a tag filled in. `python3 -m unittest discover --start-directory test`
 runs the unit tests for the `kubernetes-versions.json` computation.
